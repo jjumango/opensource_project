@@ -73,7 +73,6 @@ def get_top_tracks_by_genre(genre, limit=50):
     tracks = data.get('tracks', {}).get('track', [])
     return [[track['artist']['name'], track['name']] for track in tracks]
 
-# 날씨에 따라 장르 선택 후 추천
 def recommend_music_by_weather(city):
     weather_main = get_weather_main(city)
     
@@ -100,7 +99,6 @@ import time
 from collections import Counter
 from lastfm import lfm
 
-# 사용자 수락 후 음악 추천
 def get_user_permission_and_recommend():
     user_input = input("사용자 정보를 수집하여 추천해드릴 수 있습니다. 수락: y/ 거절: n: ")
     if user_input.lower() == 'y':
@@ -112,7 +110,6 @@ def get_user_permission_and_recommend():
     else:
         print("잘못된 입력입니다.")
 
-# 사용자 최근 트랙 정보 가져오기 (lfm 사용)
 def get_recent_tracks(user, limit=5):
     params = {
         'method': 'user.getrecenttracks',
@@ -121,12 +118,12 @@ def get_recent_tracks(user, limit=5):
         'format': 'json',
         'limit': limit
     }
-    response = requests.get("http://ws.audioscrobbler.com/2.0/", params=params)  # 이 부분에서 API 요청
+    response = requests.get("http://ws.audioscrobbler.com/2.0/", params=params)  
     data = response.json()
-     # 응답 확인 코드 추가
+    
     if 'recenttracks' not in data:
         print(" 최근 트랙 정보가 없습니다. 사용자 이름이나 API 키를 확인하세요.")
-        print("응답 내용:", data)  # 디버깅용 출력
+        print("응답 내용:", data) 
         return []
 
     return data['recenttracks'].get('track', [])
@@ -143,9 +140,9 @@ def get_recent_tracks(user, limit=5):
         result.append({'artist': {'name': artist}, 'name': title, 'url': url})
     return result
 
-# 사용자 정보를 수집하여 최근 트랙 장르 기반 추천
+
 def recommend_music_by_user(user):
-    recent_tracks = get_recent_tracks(user)  # self를 제거한 함수 호출
+    recent_tracks = get_recent_tracks(user) 
     if not recent_tracks:
         print("사용자의 최근 트랙 데이터를 가져오지 못했습니다.")
         return
@@ -162,7 +159,7 @@ def recommend_music_by_user(user):
         data = response.json()
         tags = data.get('track', {}).get('toptags', {}).get('tag', [])
         if tags:
-            return tags[0]['name'].lower()  # 가장 상위 태그 반환
+            return tags[0]['name'].lower()  
         return None
 
     genres = []
@@ -180,7 +177,6 @@ def recommend_music_by_user(user):
     most_common_genre = Counter(genres).most_common(1)[0][0]
     print(f"\n 사용자에게 맞는 장르: {most_common_genre}")
 
-    # 장르별 인기 트랙 추천
     tracks = get_top_tracks_by_genre(most_common_genre)
     if not tracks:
         print("추천 음악이 없습니다.")
