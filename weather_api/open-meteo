@@ -1,3 +1,7 @@
+#License
+# Weather data by Open-Meteo.com (CC BY 4.0)
+# https://open-meteo.com/ → https://creativecommons.org/licenses/by/4.0/
+
 import requests
 
 # 1. 도시명으로 위도/경도 가져오기
