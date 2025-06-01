@@ -1,5 +1,5 @@
 from flask import Flask, request, redirect, url_for
-from module.open_metro import get_coordinates, get_weather, interpret_weather_code
+from module.open_meteo import get_coordinates, get_weather, interpret_weather_code
 from module.recommends_todo import recommends_todo
 from module.recommends_menu import load_menulist, recommends_menu
 from module.recommends_music import recommend_music_by_weather, get_user_permission_and_recommend, recommend_music_by_user
