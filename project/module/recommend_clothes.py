@@ -1,0 +1,81 @@
+import requests
+
+# 1. 도시명으로 위도/경도 가져오기
+def get_coordinates(city):
+    url = "https://geocoding-api.open-meteo.com/v1/search"
+    params = {"name": city, "count": 1}
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        results = response.json().get("results")
+        if results:
+            latitude = results[0]["latitude"]
+            longitude = results[0]["longitude"]
+            return latitude, longitude
+        else:
+            print("❗ 도시를 찾을 수 없습니다.")
+            return None, None
+    except Exception as e:
+        print("❌ 좌표 가져오기 실패:", e)
+        return None, None
+
+# 2. 위도/경도로 현재 날씨 코드와 기온 가져오기
+def get_weather(lat, lon):
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": "temperature_2m,weather_code",
+        "timezone": "auto",
+    }
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json().get("current")
+        if data:
+            code = data.get("weather_code")
+            temp = data.get("temperature_2m")
+            return code, temp
+        else:
+            print("❗ 현재 날씨 정보를 찾을 수 없습니다.")
+            return None, None
+    except Exception as e:
+        print("❌ 날씨 가져오기 실패:", e)
+        return None, None
+
+# 3. 날씨 코드 해석
+def interpret_weather_code(code):
+    if code in [0]: return "맑음"
+    elif code in [1, 2, 3]: return "흐림"
+    elif code in [45, 48]: return "안개"
+    elif code in [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]: return "비"
+    elif code in [71, 73, 75, 77, 85, 86]: return "눈"
+    elif code in [95, 96, 99]: return "뇌우"
+    else: return "정보없음"
+
+# 4. 기온 + 날씨 기반 옷차림 추천
+def recommend_outfit(temp, weather):
+    msg = ""
+
+    if temp >= 28:
+        msg = "🔥 더운 날씨! 반팔, 반바지, 린넨 옷 추천!"
+    elif 23 <= temp < 28:
+        msg = "☀️ 따뜻해요. 반팔, 얇은 셔츠, 원피스 좋아요!"
+    elif 17 <= temp < 23:
+        msg = "🌤 간절기예요. 맨투맨, 가디건, 긴팔 셔츠 추천!"
+    elif 12 <= temp < 17:
+        msg = "🍂 쌀쌀해요. 니트, 자켓, 후드티 추천!"
+    elif 5 <= temp < 12:
+        msg = "🧥 추워요. 두꺼운 코트, 울 니트 추천!"
+    else:
+        msg = "❄️ 매우 추워요. 패딩, 목도리, 장갑까지 챙기세요!"
+
+    # 날씨 조건 추가 조언
+    if weather == "비":
+        msg += " ☔ 우산 챙기세요!"
+    elif weather == "눈":
+        msg += " ❄️ 미끄러우니 조심하세요!"
+    elif weather == "뇌우":
+        msg += " ⚡ 외출은 자제하는 게 좋아요!"
+
+    return msg
