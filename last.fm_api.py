@@ -1,62 +1,89 @@
 import requests
-import json
 
-def get_weather(city):
-    API_KEY = "자신의 API KEY"
-    lang = "kr"
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&lang={lang}&units=metric"
+# 1. 도시명으로 위도/경도 가져오기
+def get_coordinates(city):
+     url = "https://geocoding-api.open-meteo.com/v1/search"
+     params = {"name": city, "count": 1}
+     try:
+         response = requests.get(url, params=params)
+         response.raise_for_status()
+         results = response.json().get("results")
+         if results:
+             latitude = results[0]["latitude"]
+             longitude = results[0]["longitude"]
+             return latitude, longitude
+         else:
+             print("도시를 찾을 수 없습니다.")
+             return None, None
+     except Exception as e:
+         print("좌표 가져오기 실패:", e)
+         return None, None
+ 
+ # 2. 위도/경도로 현재 날씨 코드와 기온 가져오기
+def get_weather(lat, lon):
+     url = "https://api.open-meteo.com/v1/forecast"
+     params = {
+         "latitude": lat,
+         "longitude": lon,
+         "current": "temperature_2m,weather_code",
+         "timezone": "auto"
+     }
+     try:
+          response = requests.get(url, params=params)
+          response.raise_for_status()
+          data = response.json().get("current")
+          if data:
+               code = data.get("weather_code")
+               temp = data.get("temperature_2m")
+               return code, temp
+          else:
+               print("현재 날씨 정보를 찾을 수 없습니다.")
+               return None, None
+     except Exception as e:
+          print("날씨 가져오기 실패:", e)
+          return None, None
 
-    response = requests.get(url)
-    data = json.loads(response.text)
-
-    if response.status_code == 200:
-        print(f"{city}의 날씨: {data['weather'][0]['description']}")
-        print(f"현재 기온: {data['main']['temp']}")
-        print(f"체감 온도; {data['main']['feels_like']}")
-        print(f"최저 기온: {data['main']['temp_min']}")
-        print(f"최고 기온: {data['main']['temp_max']}")
-        print(f"습도: {data['main']['humidity']}")
-    else:
-        print("error")
+# 3. 날씨 코드 해석
+def interpret_weather_code(code):
+    if code in [0]: return "맑음"
+    elif code in [1, 2, 3]: return "흐림"
+    elif code in [45, 48]: return "안개"
+    elif code in [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]: return "비"
+    elif code in [71, 73, 75, 77, 85, 86]: return "눈"
+    elif code in [95, 96, 99]: return "뇌우"
+    else: return "정보없음"
 
 city_name = input("도시 이름을 입력하세요 (영어로 입력): ")
-get_weather(city_name)
+get_coordinates(city_name)
 
 import random
 
 def get_weather_main(city):
-    API_KEY = "자신의 API KEY"
-    lang = "kr"
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&lang={lang}&units=metric"
-
-    response = requests.get(url)
-    data = json.loads(response.text)
-
-    if response.status_code == 200:
-        return data['weather'][0]['main']
-    else:
-        print("error")
+    lat, lon = get_coordinates(city)
+    if lat is None or lon is None:
+        print("위치 정보를 가져오지 못했습니다.")
+        return None
+    
+    code, temp = get_weather(lat, lon)
+    if code is None:
+        print("날씨 정보를 가져오지 못했습니다.")
+        return None
+    
+    return interpret_weather_code(code)
 
 get_weather_main(city_name)
 
-lastfm_api_key = "자신의 LAST.FM API KEY"
+lastfm_api_key = "bb5b59ee8e285582b5b90e8aaa1055e9"
 
 
 weather_genre_map = {
-    'Clear': ['indie', 'jazz', 'reggae', 'british', 'dance', 'hip-hop'],
-    'Clouds': ['country', 'blues', 'classical'],
-    'Rain': ['hip-hop', 'dance', 'electronic', 'rnb', 'blues'],
-    'Drizzle': ['hip-hop', 'dance', 'electronic', 'rnb', 'blues'],
-    'Squall': ['hardcore', 'alternative', 'rock', 'punk'],
-    'Tornado': ['hardcore', 'alternative', 'rock', 'punk'],
-    'Thunderstorm': ['hardcore', 'alternative', 'rock', 'punk'],
-    'Dust': ['hardcore', 'alternative', 'rock', 'punk'],
-    'Sand': ['hardcore', 'alternative', 'rock', 'punk'],
-    'Snow': ['acoustic', 'blues', 'rnb'],
-    'Mist': ['jazz', 'reggae', 'british', 'blues', 'hip-hop', 'electronic'],
-    'Fog': ['jazz', 'reggae', 'british', 'blues', 'hip-hop', 'electronic'],
-    'Haze': ['jazz', 'reggae', 'british', 'blues', 'hip-hop', 'electronic'],
-    'Smoke': ['jazz', 'reggae', 'british', 'blues', 'hip-hop', 'electronic']
+    "맑음": ['indie', 'jazz', 'reggae', 'british', 'dance', 'hip-hop'],
+    "흐림": ['classical', 'reggae', 'country', 'blues', 'hip-hop', 'electronic'], 
+    "안개": ['jazz', 'reggae', 'british', 'blues', 'hip-hop', 'electronic'],
+    "비": ['hip-hop', 'dance', 'electronic', 'rnb', 'blues'],
+    "눈": ['acoustic', 'blues', 'rnb'],
+    "뇌우": ['hardcore', 'alternative', 'rock', 'punk'],
+    "정보없음": ['indie', 'jazz', 'classical', 'british', 'dance', 'reggae', 'country', 'blues', 'hip-hop', 'electronic', 'rnb', 'acoustic', 'hardcore', 'alternative', 'rock', 'punk']
 }
 
 def get_top_tracks_by_genre(genre, limit=50):
