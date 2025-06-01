@@ -22,7 +22,7 @@ Weather Life는 사용자가 원하는 도시의 이름을 입력하면 해당 �
 2. 온도/날씨에 따른 옷차림, 음식, 활동, 노래 추천
    
 ## 사용 기술
-+ OpenWeatherMap API
++ Open-Meteo API
 
 ## 사용 방법
 
