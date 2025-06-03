@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Life</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #6765e8;
+            color: white;
+            padding: 15px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        input[type="text"], select {
+            padding: 8px;
+            width: 250px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+        input[type="submit"] {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .buttons a {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            background-color: #6c63ff;
+        }
+
+        .explanation {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f1f3f5;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .menu-result {
+            font-weight: bold;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header>Weather Life</header>
+
+    <div class="container">
+        <h2>도시 이름을 입력하세요</h2>
+
+        <form method="POST">
+            <input type="text" name="city" placeholder="예: Seoul" required>
+            <input type="submit" value="날씨 확인">
+        </form>
+
+        {% if city and weather and temp is not none %}
+            <p><strong>{{ city }}</strong>의 날씨는 <strong>{{ weather }}</strong>, 기온은 <strong>{{ temp }}°C</strong>입니다.</p>
+        {% endif %}
+
+        <div class="explanation">
+            <p>도시의 날씨에 맞는 추천을 보고 싶다면 아래 버튼을 눌러보세요!</p>
+        </div>
+
+        <div class="buttons">
+            <a href="/weather/{{ city }}/clothes">👕 옷 추천</a>
+            <a href="/weather/{{ city }}/food">🍱 음식 추천</a>
+            <a href="/weather/{{ city }}/todo">✅ 할 일 추천</a>
+            <a href="/weather/{{ city }}/music">🎵 음악 추천</a>
+        </div>
+
+        <div class="results">
+            {% if path and 'food' in path %}
+                <p><strong>🍱 음식 추천</strong></p>
+
+                <form method="POST" action="/weather/{{ city }}/food">
+                    <label>🍽️ 음식 종류:</label>
+                    <select name="category">
+                        <option value="밥">밥</option>
+                        <option value="빵">빵</option>
+                        <option value="면">면</option>
+                        <option value="죽">죽</option>
+                        <option value="국">국</option>
+                        <option value="탕">탕</option>
+                        <option value="찌개">찌개</option>
+                        <option value="찜">찜</option>
+                        <option value="구이">구이</option>
+                        <option value="회">회</option>
+                    </select>
+                    <input type="submit" value="🍱 추천받기">
+                </form>
+            {% endif %}
+
+            {% if path and 'food' in path and menu %}
+                <p class="menu-result">{{ menu }}</p>
+            {% endif %}
+
+            {% if outfit %}
+                <p><strong>👕 추천 옷차림:</strong> {{ outfit }}</p>
+            {% endif %}
+            {% if todo %}
+                <p><strong>✅ 추천 할 일:</strong> {{ todo }}</p>
+            {% endif %}
+            {% if path and 'music' in path and not lastfm_key_set %}
+                <p><strong>🎧 Last.fm API 키를 입력해주세요</strong></p>
+                <form method="POST" action="/weather/{{ city }}/music">
+                    <input type="text" name="apikey" placeholder="API Key" required>
+                    <input type="submit" value="제출">
+                </form>
+            {% endif %}
+
+            {% if music_genre %}
+                <p><strong>🎼 추천 장르:</strong> {{ music_genre }}</p>
+            {% endif %}
+
+            {% if music_tracks %}
+                <p><strong>🎵 추천 음악:</strong></p>
+                <pre>{{ music_tracks }}</pre>
+                <a href="/weather/{{ city }}/music/user">사용자 기반 추천 보기</a>
+            {% endif %}
+
+            {% if music_error %}
+                <p style="color:red"><strong>{{ music_error }}</strong></p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
