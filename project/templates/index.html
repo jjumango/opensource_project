@@ -90,7 +90,7 @@
     <div class="container">
         <h2>도시 이름을 입력하세요</h2>
 
-        <form method="POST">
+        <form method="POST" action="{{url_for('index')}}">
             <input type="text" name="city" placeholder="예: Seoul" required>
             <input type="submit" value="날씨 확인">
         </form>
@@ -100,7 +100,7 @@
         {% endif %}
 
         <div class="explanation">
-            <p>도시의 날씨에 맞는 추천을 보고 싶다면 아래 버튼을 눌러보세요!</p>
+            <p>날씨에 맞는 추천활동을 해보고 싶다면 아래 버튼을 눌러보세요!</p>
         </div>
 
         <div class="buttons">
@@ -151,14 +151,65 @@
             {% endif %}
 
             {% if music_genre %}
-                <p><strong>🎼 추천 장르:</strong> {{ music_genre }}</p>
+                <div style="margin-top: 20px;">
+                    <h3>🎼 추천 장르: <span style="color: #6c63ff;">{{ music_genre }}</span></h3>
+                </div>
             {% endif %}
 
             {% if music_tracks %}
-                <p><strong>🎵 추천 음악:</strong></p>
-                <pre>{{ music_tracks }}</pre>
-                <a href="/weather/{{ city }}/music/user">사용자 기반 추천 보기</a>
+                <div style="margin-top: 15px;">
+                    <h4>🎵 추천 음악:</h4>
+                    <ul style="list-style-type: none; padding: 0;">
+                        {% for line in music_tracks.split('\n') %}
+                            <li style="margin: 5px 0;">🎶 {{ line }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
+
+            {% if music_genre %}
+                <div style="margin-top: 15px;">
+                    <a href="/weather/{{ city }}/music/user">
+                    사용자 기반 추천 보기
+                    </a>
+                </div>
+            {% endif %}
+
+            {% if path and 'music/user' in path %}
+                <h3>사용자 기반 음악 추천</h3>
+
+                <form method="POST">
+                    <input type="text" name="username" placeholder="Last.fm 사용자 이름" required>
+                    <input type="submit" value="추천 받기">
+                </form>
+
+                {% if music_error %}
+                    <p style="color:red;"><strong>{{ music_error }}</strong></p>
+                {% endif %}
+
+                {% if user_music_genre %}
+                    <p><strong>🎧 가장 많이 들은 장르:</strong> {{ user_music_genre }}</p>
+                {% endif %}
+
+                {% if user_recommended_tracks %}
+                    <p><strong>🎵 추천 음악:</strong></p>
+                    <ul>
+                    {% for line in user_recommended_tracks.split('\n') %}
+                        <li>🎶 {{ line }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if user_recent_tracks %}
+                    <p><strong>⏱ 최근 들은 음악:</strong></p>
+                    <ul>
+                        {% for line in user_recent_tracks.split('\n') %}
+                            <li>{{ line }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endif %}
+
 
             {% if music_error %}
                 <p style="color:red"><strong>{{ music_error }}</strong></p>

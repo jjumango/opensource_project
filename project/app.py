@@ -7,11 +7,12 @@ from module.recommends_music import recommend_music_by_weather, get_user_permiss
 from module import recommends_music
 
 app = Flask(__name__)
+lastfm_key_set = False
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     city = None
-    weather = None
+    weather = "정보없음"
     temp = None
     if request.method == 'POST':
         city = request.form['city'].strip()
@@ -30,7 +31,7 @@ def todo(city):
         temp = 15
     else:
         code, temp = get_weather(lat, lon)
-        weather_desc = interpret_weather_code(code) if code else "정보없음"
+        weather_desc = interpret_weather_code(code)
 
     recommended = recommends_todo(weather_desc)
     return render_template("index.html", city=city, weather=weather_desc, temp=temp, todo=recommended, path=request.path)
@@ -43,7 +44,7 @@ def food(city):
         temp = 15
     else:
         code, temp = get_weather(lat, lon)
-        weather_desc = interpret_weather_code(code) if code else "정보없음"
+        weather_desc = interpret_weather_code(code)
 
     menu_result = None
     if request.method == 'POST':
@@ -65,7 +66,7 @@ def clothes(city):
         temp = 15
     else:
         code, temp = get_weather(lat, lon)
-        weather_desc = interpret_weather_code(code) if code else "정보없음"
+        weather_desc = interpret_weather_code(code)
 
     outfit_msg = recommend_outfit(temp, weather_desc)
     return render_template("index.html", city=city, weather=weather_desc, temp=temp, outfit=outfit_msg, path=request.path)
@@ -99,5 +100,43 @@ def music(city):
     track_text = "\n".join([f"{artist} - {title}" for artist, title in tracks])
 
     return render_template("index.html", city=city, weather=weather, temp=15, music_genre=genre, music_tracks=track_text, path=request.path, lastfm_key_set=True)
+
+@app.route('/weather/<city>/music/user', methods=['GET', 'POST'])
+def user_music(city):
+    global lastfm_key_set
+    genre = None
+    recommended = []
+    recent = []
+    music_error = None
+
+    if not lastfm_key_set:
+        return redirect(url_for('music', city=city))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        if not username:
+            music_error = "사용자 이름을 입력해주세요."
+        else:
+            result = recommends_music.recommend_music_by_user(username)
+            if not result:
+                music_error = "추천 결과를 가져오지 못했습니다."
+            else:
+                genre = result.get("genre", "정보없음")
+                recommended = result.get("recommended", [])
+                recent = result.get("recent", [])
+
+    recommended_tracks = "\n".join([f"{a} - {t}" for a, t in recommended])
+    recent_tracks = "\n".join([f"{a} - {t}" for a, t in recent])
+
+    return render_template(
+        "index.html",
+        city=city,
+        user_music_genre=genre,
+        user_recommended_tracks=recommended_tracks,
+        user_recent_tracks=recent_tracks,
+        music_error=music_error,
+        path=request.path,
+        lastfm_key_set=True
+    )
 
 app.run(debug=True)

@@ -173,10 +173,11 @@ def recommend_music_by_user(user):
     if not recent_tracks:
         print("사용자의 최근 트랙 데이터를 가져오지 못했습니다.")
         return {
-    "genre": most_common_genre,
-    "recommended": recommendations,
-    "recent": [(t['artist']['#text'], t['name']) for t in recent_tracks[:2]]
-}
+            "genre": "정보없음",
+            "recommended": [],
+            "recent": []
+        }
+
     
     def get_track_genre(artist, track):
         params = {
