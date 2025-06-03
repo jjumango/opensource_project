@@ -26,7 +26,7 @@ Weather Life는 사용자가 원하는 도시의 이름을 입력하면 해당 �
 + Open-Meteo API
 + last.fm API
 
-###메뉴리스트 출처
+### 메뉴리스트 출처
 메뉴리스트는 한국영양학회의 음식분류 체계와 음식수 파일을 참고하였습니다. (출처: https://www.kns.or.kr/can6.0/FoodDB.asp)
 
 ## 팀원 소개
