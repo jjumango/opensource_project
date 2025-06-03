@@ -30,7 +30,7 @@
             text-align: center;
         }
 
-        input[type="text"], select {
+        input[type="text"], select, input[type="number"] {
             padding: 8px;
             width: 250px;
             border-radius: 6px;
@@ -85,136 +85,170 @@
     </style>
 </head>
 <body>
-    <header>Weather Life</header>
+<header>Weather Life</header>
 
-    <div class="container">
-        <h2>도시 이름을 입력하세요</h2>
+<div class="container">
+    <h2>도시 이름을 입력하세요</h2>
 
-        <form method="POST" action="{{url_for('index')}}">
-            <input type="text" name="city" placeholder="예: Seoul" required>
-            <input type="submit" value="날씨 확인">
-        </form>
+    <form method="POST" action="{{ url_for('index') }}">
+        <input type="text" name="city" placeholder="예: Seoul" required>
+        <input type="submit" value="날씨 확인">
+    </form>
 
-        {% if city and weather and temp is not none %}
-            <p><strong>{{ city }}</strong>의 날씨는 <strong>{{ weather }}</strong>, 기온은 <strong>{{ temp }}°C</strong>입니다.</p>
+    {% if city and weather and temp is not none %}
+        <p><strong>{{ city }}</strong>의 날씨는 <strong>{{ weather }}</strong>, 기온은 <strong>{{ temp }}°C</strong>입니다.</p>
+    {% endif %}
+
+    <div class="explanation">
+        <p>날씨에 맞는 추천활동을 해보고 싶다면 아래 버튼을 눌러보세요!</p>
+    </div>
+
+    <div class="buttons">
+        <a href="/weather/{{ city or '' }}/clothes">👕 옷 추천</a>
+        <a href="/weather/{{ city or '' }}/food">🍱 음식 추천</a>
+        <a href="/weather/{{ city or '' }}/todo">✅ 할 일 추천</a>
+        <a href="/weather/{{ city or '' }}/music">🎵 음악 추천</a>
+    </div>
+
+    <div class="results">
+        {# 👕 옷 추천 영역 #}
+        {% if path and 'clothes' in path %}
+            <p><strong>👕 옷차림 추천</strong></p>
+            <form method="POST" action="/weather/{{ city }}/clothes">
+                <label>성별:</label>
+                <select name="gender" required>
+                    <option value="">-- 선택 --</option>
+                    <option value="남" {% if gender == '남' %}selected{% endif %}>남</option>
+                    <option value="여" {% if gender == '여' %}selected{% endif %}>여</option>
+                </select>
+
+                <label>나이:</label>
+                <input type="number" name="age" min="0" value="{{ age }}" required>
+
+                {% if style_list %}
+                    <label>스타일:</label>
+                    <select name="style" required>
+                        <option value="">-- 선택 --</option>
+                        {% for s in style_list %}
+                            <option value="{{ s }}" {% if selected_style == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+
+                <input type="submit" value="👕 추천받기">
+            </form>
         {% endif %}
 
-        <div class="explanation">
-            <p>날씨에 맞는 추천활동을 해보고 싶다면 아래 버튼을 눌러보세요!</p>
-        </div>
+        {% if outfit %}
+            <div style="margin-top: 20px;">
+                <p><strong>👕 추천 옷차림:</strong></p>
+                <ul style="list-style-type: none; padding: 0;">
+                    {% for item in outfit %}
+                        <li>🧥 {{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
-        <div class="buttons">
-            <a href="/weather/{{ city }}/clothes">👕 옷 추천</a>
-            <a href="/weather/{{ city }}/food">🍱 음식 추천</a>
-            <a href="/weather/{{ city }}/todo">✅ 할 일 추천</a>
-            <a href="/weather/{{ city }}/music">🎵 음악 추천</a>
-        </div>
+        {# 🍱 음식 추천 영역 #}
+        {% if path and 'food' in path %}
+            <p><strong>🍱 음식 추천</strong></p>
+            <form method="POST" action="/weather/{{ city }}/food">
+                <label>🍽️ 음식 종류:</label>
+                <select name="category">
+                    <option value="밥">밥</option>
+                    <option value="빵">빵</option>
+                    <option value="면">면</option>
+                    <option value="죽">죽</option>
+                    <option value="국">국</option>
+                    <option value="탕">탕</option>
+                    <option value="찌개">찌개</option>
+                    <option value="찜">찜</option>
+                    <option value="구이">구이</option>
+                    <option value="회">회</option>
+                </select>
+                <input type="submit" value="🍱 추천받기">
+            </form>
+        {% endif %}
 
-        <div class="results">
-            {% if path and 'food' in path %}
-                <p><strong>🍱 음식 추천</strong></p>
+        {% if path and 'food' in path and menu %}
+            <p class="menu-result">{{ menu }}</p>
+        {% endif %}
 
-                <form method="POST" action="/weather/{{ city }}/food">
-                    <label>🍽️ 음식 종류:</label>
-                    <select name="category">
-                        <option value="밥">밥</option>
-                        <option value="빵">빵</option>
-                        <option value="면">면</option>
-                        <option value="죽">죽</option>
-                        <option value="국">국</option>
-                        <option value="탕">탕</option>
-                        <option value="찌개">찌개</option>
-                        <option value="찜">찜</option>
-                        <option value="구이">구이</option>
-                        <option value="회">회</option>
-                    </select>
-                    <input type="submit" value="🍱 추천받기">
-                </form>
-            {% endif %}
+        {# ✅ 할 일 추천 영역 #}
+        {% if todo %}
+            <p><strong>✅ 추천 할 일:</strong> {{ todo }}</p>
+        {% endif %}
 
-            {% if path and 'food' in path and menu %}
-                <p class="menu-result">{{ menu }}</p>
-            {% endif %}
+        {# 🎵 음악 추천 영역 #}
+        {% if path and 'music' in path and not lastfm_key_set %}
+            <p><strong>🎧 Last.fm API 키를 입력해주세요</strong></p>
+            <form method="POST" action="/weather/{{ city }}/music">
+                <input type="text" name="apikey" placeholder="API Key" required>
+                <input type="submit" value="제출">
+            </form>
+        {% endif %}
 
-            {% if outfit %}
-                <p><strong>👕 추천 옷차림:</strong> {{ outfit }}</p>
-            {% endif %}
-            {% if todo %}
-                <p><strong>✅ 추천 할 일:</strong> {{ todo }}</p>
-            {% endif %}
-            {% if path and 'music' in path and not lastfm_key_set %}
-                <p><strong>🎧 Last.fm API 키를 입력해주세요</strong></p>
-                <form method="POST" action="/weather/{{ city }}/music">
-                    <input type="text" name="apikey" placeholder="API Key" required>
-                    <input type="submit" value="제출">
-                </form>
-            {% endif %}
+        {% if music_genre %}
+            <div style="margin-top: 20px;">
+                <h3>🎼 추천 장르: <span style="color: #6c63ff;">{{ music_genre }}</span></h3>
+            </div>
+        {% endif %}
 
-            {% if music_genre %}
-                <div style="margin-top: 20px;">
-                    <h3>🎼 추천 장르: <span style="color: #6c63ff;">{{ music_genre }}</span></h3>
-                </div>
-            {% endif %}
+        {% if music_tracks %}
+            <div style="margin-top: 15px;">
+                <h4>🎵 추천 음악:</h4>
+                <ul style="list-style-type: none; padding: 0;">
+                    {% for line in music_tracks.split('\n') %}
+                        <li style="margin: 5px 0;">🎶 {{ line }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
-            {% if music_tracks %}
-                <div style="margin-top: 15px;">
-                    <h4>🎵 추천 음악:</h4>
-                    <ul style="list-style-type: none; padding: 0;">
-                        {% for line in music_tracks.split('\n') %}
-                            <li style="margin: 5px 0;">🎶 {{ line }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            {% if music_genre %}
-                <div style="margin-top: 15px;">
-                    <a href="/weather/{{ city }}/music/user">
+        {% if music_genre %}
+            <div style="margin-top: 15px;">
+                <a href="/weather/{{ city }}/music/user">
                     사용자 기반 추천 보기
-                    </a>
-                </div>
+                </a>
+            </div>
+        {% endif %}
+
+        {% if path and 'music/user' in path %}
+            <h3>사용자 기반 음악 추천</h3>
+
+            <form method="POST">
+                <input type="text" name="username" placeholder="Last.fm 사용자 이름" required>
+                <input type="submit" value="추천 받기">
+            </form>
+
+            {% if music_error %}
+                <p style="color:red;"><strong>{{ music_error }}</strong></p>
             {% endif %}
 
-            {% if path and 'music/user' in path %}
-                <h3>사용자 기반 음악 추천</h3>
+            {% if user_music_genre %}
+                <p><strong>🎧 가장 많이 들은 장르:</strong> {{ user_music_genre }}</p>
+            {% endif %}
 
-                <form method="POST">
-                    <input type="text" name="username" placeholder="Last.fm 사용자 이름" required>
-                    <input type="submit" value="추천 받기">
-                </form>
-
-                {% if music_error %}
-                    <p style="color:red;"><strong>{{ music_error }}</strong></p>
-                {% endif %}
-
-                {% if user_music_genre %}
-                    <p><strong>🎧 가장 많이 들은 장르:</strong> {{ user_music_genre }}</p>
-                {% endif %}
-
-                {% if user_recommended_tracks %}
-                    <p><strong>🎵 추천 음악:</strong></p>
-                    <ul>
+            {% if user_recommended_tracks %}
+                <p><strong>🎵 추천 음악:</strong></p>
+                <ul>
                     {% for line in user_recommended_tracks.split('\n') %}
                         <li>🎶 {{ line }}</li>
                     {% endfor %}
-                    </ul>
-                {% endif %}
-
-                {% if user_recent_tracks %}
-                    <p><strong>⏱ 최근 들은 음악:</strong></p>
-                    <ul>
-                        {% for line in user_recent_tracks.split('\n') %}
-                            <li>{{ line }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+                </ul>
             {% endif %}
 
-
-            {% if music_error %}
-                <p style="color:red"><strong>{{ music_error }}</strong></p>
+            {% if user_recent_tracks %}
+                <p><strong>⏱ 최근 들은 음악:</strong></p>
+                <ul>
+                    {% for line in user_recent_tracks.split('\n') %}
+                        <li>{{ line }}</li>
+                    {% endfor %}
+                </ul>
             {% endif %}
-        </div>
+        {% endif %}
     </div>
+</div>
 </body>
 </html>
