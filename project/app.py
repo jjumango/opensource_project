@@ -2,9 +2,14 @@ from flask import Flask, request, render_template, redirect, url_for
 from module.open_meteo import get_coordinates, get_weather, interpret_weather_code
 from module.recommends_todo import recommends_todo
 from module.recommend_menu import load_menulist, recommend_menu
-from module.recommend_clothes import recommend_outfit
-from module.recommends_music import recommend_music_by_weather, get_user_permission_and_recommend, recommend_music_by_user
+from module.recommend_clothes import get_style_options, recommend_outfit
+from module.recommends_music import (
+    recommend_music_by_weather,
+    get_user_permission_and_recommend,
+    recommend_music_by_user
+)
 from module import recommends_music
+
 
 app = Flask(__name__)
 lastfm_key_set = False
@@ -58,23 +63,66 @@ def food(city):
 
     return render_template("index.html", city=city, weather=weather_desc, temp=temp, menu=menu_result, path=request.path)
 
-@app.route('/weather/<city>/clothes')
-def clothes(city):
-    lat, lon = get_coordinates(city)
-    if lat is None or lon is None:
-        weather_desc = "정보없음"
-        temp = 15
-    else:
-        code, temp = get_weather(lat, lon)
-        weather_desc = interpret_weather_code(code)
+from flask import request, render_template
+from module.recommend_clothes import get_style_options, recommend_outfit
+from module.weather_utils import (
+    get_coordinates,
+    get_temperature_and_weathercode,
+    get_weather_comment
+)
 
-    outfit_msg = recommend_outfit(temp, weather_desc)
-    return render_template("index.html", city=city, weather=weather_desc, temp=temp, outfit=outfit_msg, path=request.path)
+@app.route('/weather/<city>/clothes', methods=['GET', 'POST'])
+def clothes(city):
+    weather_desc = ""
+    temp = 0
+    outfit_list = []
+    style_list = []
+    gender = ""
+    age = ""
+    selected_style = ""
+
+    # 현재 날씨 정보 가져오기
+    lat, lon = get_coordinates(city)
+    temp, weather_code = get_temperature_and_weathercode(lat, lon)
+    weather_desc = get_weather_comment(weather_code)
+
+    # POST일 때 폼 처리
+    if request.method == 'POST':
+        gender = request.form.get('gender')        # '남' 또는 '여'
+        age = request.form.get('age')              # 숫자 문자열
+        selected_style = request.form.get('style') # 선택된 스타일 (nullable)
+
+        try:
+            age_int = int(age)
+
+            # 🔹 스타일 선택 목록 생성 (성별+나이 기반으로)
+            style_list = get_style_options(gender, age_int)
+
+            # 🔹 스타일이 선택되었을 때만 추천 실행
+            if selected_style:
+                outfit_list = recommend_outfit(gender, age_int, selected_style, temp)
+
+        except ValueError:
+            outfit_list = ["❗ 나이를 숫자로 입력해주세요."]
+        except Exception as e:
+            outfit_list = [f"⚠️ 오류 발생: {str(e)}"]
+
+    return render_template(
+        "index.html",
+        city=city,
+        weather=weather_desc,
+        temp=temp,
+        outfit=outfit_list,
+        style_list=style_list,
+        selected_style=selected_style,
+        gender=gender,
+        age=age,
+        path=request.path
+    )
 
 @app.route('/weather/<city>/music', methods=['GET', 'POST'])
 def music(city):
-    global city_name, lastfm_key_set
-    city_name = city
+    global lastfm_key_set
 
     if request.method == 'POST':
         api_key = request.form.get('apikey')
@@ -99,7 +147,16 @@ def music(city):
 
     track_text = "\n".join([f"{artist} - {title}" for artist, title in tracks])
 
-    return render_template("index.html", city=city, weather=weather, temp=15, music_genre=genre, music_tracks=track_text, path=request.path, lastfm_key_set=True)
+    return render_template(
+        "index.html",
+        city=city,
+        weather=weather,
+        temp=15,
+        music_genre=genre,
+        music_tracks=track_text,
+        path=request.path,
+        lastfm_key_set=True
+    )
 
 @app.route('/weather/<city>/music/user', methods=['GET', 'POST'])
 def user_music(city):
@@ -139,4 +196,5 @@ def user_music(city):
         lastfm_key_set=True
     )
 
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
