@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 from module.open_meteo import get_coordinates, get_weather, interpret_weather_code
 from module.recommends_todo import recommends_todo
 from module.recommend_menu import load_menulist, recommend_menu
